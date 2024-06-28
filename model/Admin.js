@@ -1,0 +1,31 @@
+const mongoose = require('mongoose')
+const bcrypt = require('bcryptjs')
+
+const adminSchema = new mongoose.Schema({
+    username: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    password: {
+        type: String,
+        required: true,
+        validate: {
+            validator: password => /^(?=.*[0-9])(?=.*[!@#$%^&*])(?=.*[A-Z])[a-zA-Z0-9!@#$%^&*]{8,}$/.test(password),
+            message: 'Password must contain at least one number and one special character'
+        }
+    }
+})
+
+
+adminSchema.pre('save', async function (next) {
+    if (!this.isModified('password')) {
+        next()
+    }
+
+    const salt = await bcrypt.genSalt(10)
+    this.password = await bcrypt.hash(this.password, salt)
+    next()
+})
+
+module.exports = mongoose.model('Admin', adminSchema)
